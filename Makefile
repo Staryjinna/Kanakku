@@ -4,7 +4,7 @@ PY := backend/.venv/bin
 
 setup:
 	python3 -m venv backend/.venv
-	$(PY)/pip install -e "backend[dev]"
+	$(PY)/pip install -e "backend[dev,rerank]"
 	cd frontend && npm ci
 	@test -f .env || cp .env.example .env
 
@@ -28,5 +28,11 @@ lint:
 eval-bills:
 	$(PY)/python scripts/eval_bills.py
 
-ingest eval-gst backup seed:
+ingest:
+	$(PY)/python scripts/ingest_corpus.py $(ARGS)
+
+eval-gst:
+	$(PY)/python scripts/eval_gst.py
+
+backup seed:
 	@echo "'$@' is not implemented yet (planned for a later phase)"; exit 1

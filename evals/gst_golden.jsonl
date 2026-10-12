@@ -1,0 +1,13 @@
+{"question": "At what turnover must a business that only sells goods register for GST?", "expected_answer": "When aggregate turnover in a financial year exceeds Rs 40 lakh (lower limits in some special category states).", "expected_sources": ["SAMPLE Registration and Composition Notes"]}
+{"question": "Up to what turnover can a small taxpayer choose the composition scheme?", "expected_answer": "Aggregate turnover up to Rs 1.5 crore.", "expected_sources": ["SAMPLE Registration and Composition Notes"]}
+{"question": "By which date must GSTR-3B be filed each month?", "expected_answer": "By the 20th of the following month.", "expected_sources": ["SAMPLE Registration and Composition Notes"]}
+{"question": "Can a composition dealer claim input tax credit?", "expected_answer": "No, composition dealers cannot claim input tax credit.", "expected_sources": ["SAMPLE Registration and Composition Notes"]}
+{"question": "What is the deadline to claim input tax credit for an invoice?", "expected_answer": "The earlier of 30 November following the end of the financial year, or the date of filing the annual return.", "expected_sources": ["SAMPLE Input Tax Credit Notes"]}
+{"question": "Is input tax credit available on food and beverages?", "expected_answer": "No, input tax credit on food and beverages is blocked, except in limited cases allowed by law.", "expected_sources": ["SAMPLE Input Tax Credit Notes"]}
+{"question": "What documents are needed to claim input tax credit?", "expected_answer": "A tax invoice or debit note, receipt of the goods or services, tax paid by the supplier, and a filed return.", "expected_sources": ["SAMPLE Input Tax Credit Notes"]}
+{"question": "What is the GST rate on mobile phones?", "expected_answer": "REFUSE", "expected_sources": [], "unanswerable": true}
+{"question": "What is the late fee per day for delayed GSTR-1 filing?", "expected_answer": "REFUSE", "expected_sources": [], "unanswerable": true}
+{"question": "How long is an e-way bill valid for a 500 km journey?", "expected_answer": "REFUSE", "expected_sources": [], "unanswerable": true}
+{"question": "Are gains from cryptocurrency taxable under income tax?", "expected_answer": "REFUSE", "expected_sources": [], "unanswerable": true}
+{"question": "What is the customs duty on imported gold?", "expected_answer": "REFUSE", "expected_sources": [], "unanswerable": true}
+{"question": "Who won the cricket world cup in 2011?", "expected_answer": "REFUSE", "expected_sources": [], "unanswerable": true}
