@@ -19,6 +19,8 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest", "pytest-asyncio", "ruff", "mypy"]
+# local cross-encoder re-ranker for GST search (large: pulls in torch); optional
+rerank = ["sentence-transformers", "numpy"]
 
 [build-system]
 requires = ["setuptools>=68"]
@@ -47,5 +49,5 @@ strict = true
 plugins = ["pydantic.mypy"]
 
 [[tool.mypy.overrides]]
-module = ["sqlite_vec"]
+module = ["sqlite_vec", "sentence_transformers"]
 ignore_missing_imports = true

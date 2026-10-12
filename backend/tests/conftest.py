@@ -44,7 +44,7 @@ def gateway(conn, settings: Settings, provider: FakeProvider) -> Gateway:  # typ
 
 @pytest.fixture
 def client(settings: Settings, provider: FakeProvider) -> Iterator[TestClient]:
-    with TestClient(create_app(settings, provider)) as c:
+    with TestClient(create_app(settings, provider, FakeReranker())) as c:
         yield c
 
 
@@ -71,3 +71,16 @@ def business_id(conn) -> int:  # type: ignore[no-untyped-def]
     return int(
         conn.execute("SELECT id FROM businesses WHERE owner_user_id=?", (uid,)).fetchone()[0]
     )
+
+
+class FakeReranker:
+    """Scores passages by how many query words they contain."""
+
+    async def score(self, query: str, passages: list[str]) -> list[float]:
+        words = set(query.lower().split())
+        return [float(len(words & set(p.lower().split()))) for p in passages]
+
+
+@pytest.fixture
+def reranker() -> FakeReranker:
+    return FakeReranker()

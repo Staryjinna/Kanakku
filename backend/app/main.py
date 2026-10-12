@@ -12,6 +12,8 @@ from app.auth.router import router as auth_router
 from app.bills import service as bills_service
 from app.bills.router import router as bills_router
 from app.config import Settings, get_settings
+from app.gst_qa.rerank import Reranker, get_reranker
+from app.gst_qa.router import router as gst_router
 from app.jobs.router import router as jobs_router
 from app.jobs.worker import Worker
 from app.llm.gateway import Gateway
@@ -21,7 +23,11 @@ from app.llm.providers.ollama import OllamaProvider
 logging.basicConfig(level=logging.INFO)
 
 
-def create_app(settings: Settings | None = None, provider: Provider | None = None) -> FastAPI:
+def create_app(
+    settings: Settings | None = None,
+    provider: Provider | None = None,
+    reranker: Reranker | None = None,
+) -> FastAPI:
     settings = settings or get_settings()
 
     @asynccontextmanager
@@ -36,6 +42,7 @@ def create_app(settings: Settings | None = None, provider: Provider | None = Non
         app.state.provider = prov
         app.state.gateway = Gateway(prov, conn, settings)
         app.state.worker = worker
+        app.state.reranker = reranker or get_reranker(settings)
         bills_service.register_handlers(worker, conn, app.state.gateway, settings)
         if settings.worker_enabled:
             worker.start()
@@ -52,6 +59,7 @@ def create_app(settings: Settings | None = None, provider: Provider | None = Non
     app.include_router(auth_router)
     app.include_router(jobs_router)
     app.include_router(bills_router)
+    app.include_router(gst_router)
     _mount_frontend(app, Path(settings.frontend_dist))
     return app
 

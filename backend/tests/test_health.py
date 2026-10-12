@@ -4,7 +4,9 @@ from app.llm.providers.fake import FakeProvider
 
 
 def test_health_ok(client: TestClient) -> None:
-    assert client.get("/api/health").json() == {"status": "ok", "db": "ok", "ollama": "ok"}
+    body = client.get("/api/health").json()
+    assert (body["status"], body["db"], body["ollama"]) == ("ok", "ok", "ok")
+    assert body["reranker"] == "off"  # tests inject a fake re-ranker
 
 
 def test_health_reports_ollama_down(client: TestClient, provider: FakeProvider) -> None:

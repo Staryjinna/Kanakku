@@ -3,6 +3,7 @@
 import json
 import sqlite3
 import time
+from collections.abc import AsyncIterator
 from dataclasses import dataclass
 from typing import Any
 
@@ -87,6 +88,38 @@ class Gateway:
             cache_put(self.conn, key, {"text": result.content})
         log(result, False, None)
         return ChatResponse(result.content, parsed)
+
+    async def chat_stream(
+        self,
+        messages: list[dict[str, Any]],
+        *,
+        purpose: str,
+        business_id: int | None = None,
+        model: str | None = None,
+        temperature: float = 0.0,
+    ) -> AsyncIterator[str]:
+        """Stream a text reply (not cached). Logged once, when the stream ends."""
+        model = model or self.settings.llm_text_model
+        preview = redact("\n".join(str(m.get("content", "")) for m in messages))[:PREVIEW_CHARS]
+        start = time.monotonic()
+        usage = ProviderResult("")
+        try:
+            async for ev in self.provider.chat_stream(
+                model=model, messages=messages, temperature=temperature
+            ):
+                if ev.prompt_tokens or ev.completion_tokens:
+                    usage = ProviderResult("", ev.prompt_tokens, ev.completion_tokens)
+                if ev.text:
+                    yield ev.text
+        except LLMError as exc:
+            self._log(business_id, purpose, model, None, start, False, str(exc)[:200], preview)
+            raise
+        except GeneratorExit:
+            self._log(
+                business_id, purpose, model, usage, start, False, "client disconnected", preview
+            )
+            raise
+        self._log(business_id, purpose, model, usage, start, False, None, preview)
 
     async def embed(
         self, texts: list[str], *, purpose: str = "embed", business_id: int | None = None

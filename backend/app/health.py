@@ -13,4 +13,11 @@ async def health(request: Request) -> dict[str, Any]:
     except Exception:
         db = "error"
     ollama = "ok" if await request.app.state.provider.ping() else "unreachable"
-    return {"status": "ok" if db == "ok" else "degraded", "db": db, "ollama": ollama}
+    reranker = type(request.app.state.reranker).__name__ == "CrossEncoderReranker"
+    return {
+        "status": "ok" if db == "ok" else "degraded",
+        "db": db,
+        "ollama": ollama,
+        # "off" means GST search skips cross-encoder re-ranking (install the `rerank` extra)
+        "reranker": "cross-encoder" if reranker else "off",
+    }

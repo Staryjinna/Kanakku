@@ -1,7 +1,8 @@
 import hashlib
+from collections.abc import AsyncIterator
 from typing import Any
 
-from app.llm.providers.base import ProviderResult
+from app.llm.providers.base import ProviderResult, StreamEvent
 
 
 class FakeProvider:
@@ -33,6 +34,22 @@ class FakeProvider:
         content = self.replies.pop(0) if self.replies else self.default
         words = sum(len(str(m["content"]).split()) for m in messages)
         return ProviderResult(content, prompt_tokens=words, completion_tokens=len(content.split()))
+
+    async def chat_stream(
+        self,
+        *,
+        model: str,
+        messages: list[dict[str, Any]],
+        temperature: float,
+    ) -> AsyncIterator[StreamEvent]:
+        self.chat_calls.append(
+            {"model": model, "messages": messages, "schema": None, "images": None}
+        )
+        content = self.replies.pop(0) if self.replies else self.default
+        words = content.split(" ")
+        for i, w in enumerate(words):
+            yield StreamEvent(w if i == 0 else " " + w)
+        yield StreamEvent("", sum(len(str(m["content"]).split()) for m in messages), len(words))
 
     async def embed(self, *, model: str, texts: list[str]) -> list[list[float]]:
         self.embed_calls.append(texts)

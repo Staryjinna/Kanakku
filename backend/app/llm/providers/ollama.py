@@ -1,9 +1,11 @@
 import asyncio
+import json
+from collections.abc import AsyncIterator
 from typing import Any
 
 import httpx
 
-from app.llm.providers.base import LLMError, ProviderResult
+from app.llm.providers.base import LLMError, ProviderResult, StreamEvent
 
 RETRIES = 2
 
@@ -64,6 +66,44 @@ class OllamaProvider:
             prompt_tokens=int(data.get("prompt_eval_count", 0)),
             completion_tokens=int(data.get("eval_count", 0)),
         )
+
+    async def chat_stream(
+        self,
+        *,
+        model: str,
+        messages: list[dict[str, Any]],
+        temperature: float,
+    ) -> AsyncIterator[StreamEvent]:
+        body = {
+            "model": model,
+            "messages": messages,
+            "stream": True,
+            "options": {"temperature": temperature},
+        }
+        for attempt in range(RETRIES + 1):
+            try:
+                async with self._client.stream("POST", "/api/chat", json=body) as resp:
+                    resp.raise_for_status()
+                    async for line in resp.aiter_lines():
+                        if not line.strip():
+                            continue
+                        data = json.loads(line)
+                        text = (data.get("message") or {}).get("content", "")
+                        if data.get("done"):
+                            yield StreamEvent(
+                                text,
+                                int(data.get("prompt_eval_count", 0)),
+                                int(data.get("eval_count", 0)),
+                            )
+                        elif text:
+                            yield StreamEvent(text)
+                return
+            except (httpx.ConnectError, httpx.ConnectTimeout) as exc:
+                if attempt == RETRIES:
+                    raise LLMError(f"Ollama unreachable: {exc}") from exc
+                await asyncio.sleep(0.5 * 2**attempt)
+            except (httpx.HTTPError, ValueError) as exc:
+                raise LLMError(f"Ollama request failed: {exc}") from exc
 
     async def embed(self, *, model: str, texts: list[str]) -> list[list[float]]:
         data = await self._post("/api/embed", {"model": model, "input": texts})
