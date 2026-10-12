@@ -1,0 +1,21 @@
+{
+  "vendor_name": "Mumbai Paper House",
+  "vendor_gstin": "27AABCM5678D1ZD",
+  "bill_no": "MPH-2291",
+  "bill_date": "2026-06-03",
+  "items": [
+    {
+      "description": "A4 Paper Ream",
+      "hsn": "4802",
+      "qty": 20,
+      "rate": 280.0,
+      "gst_rate": 12,
+      "amount": 5600.0
+    }
+  ],
+  "taxable_value": 5600.0,
+  "cgst": 0.0,
+  "sgst": 0.0,
+  "igst": 672.0,
+  "total": 6272.0
+}

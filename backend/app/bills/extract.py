@@ -72,7 +72,7 @@ def load_input(path: Path) -> tuple[str | None, str | None]:
     raise ExtractionError("PDF has no readable text or scanned image")
 
 
-async def extract_bill(gateway: Gateway, path: Path, business_id: int) -> Extraction:
+async def extract_bill(gateway: Gateway, path: Path, business_id: int | None) -> Extraction:
     text, image_b64 = load_input(path)
     if image_b64:
         user = {"role": "user", "content": "Extract the bill in this image."}

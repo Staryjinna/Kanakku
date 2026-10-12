@@ -1,0 +1,29 @@
+{
+  "vendor_name": "Sri Murugan Traders",
+  "vendor_gstin": "33AAAPM1234C1ZK",
+  "bill_no": "SMT/0412",
+  "bill_date": "2026-05-12",
+  "items": [
+    {
+      "description": "Ponni Rice 25kg",
+      "hsn": "1006",
+      "qty": 4,
+      "rate": 1250.0,
+      "gst_rate": 5,
+      "amount": 5000.0
+    },
+    {
+      "description": "Toor Dal 30kg",
+      "hsn": "0713",
+      "qty": 2,
+      "rate": 3000.0,
+      "gst_rate": 5,
+      "amount": 6000.0
+    }
+  ],
+  "taxable_value": 11000.0,
+  "cgst": 275.0,
+  "sgst": 275.0,
+  "igst": 0.0,
+  "total": 11550.0
+}

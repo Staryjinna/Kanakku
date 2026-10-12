@@ -25,5 +25,8 @@ lint:
 	cd backend && ../$(PY)/ruff check . && ../$(PY)/ruff format --check . && ../$(PY)/mypy app
 	cd frontend && npm run typecheck
 
-ingest eval-bills eval-gst backup seed:
+eval-bills:
+	$(PY)/python scripts/eval_bills.py
+
+ingest eval-gst backup seed:
 	@echo "'$@' is not implemented yet (planned for a later phase)"; exit 1

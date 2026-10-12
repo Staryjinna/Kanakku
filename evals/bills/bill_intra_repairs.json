@@ -1,0 +1,29 @@
+{
+  "vendor_name": "Kumar Electricals",
+  "vendor_gstin": "33AAFPK9012E1Z5",
+  "bill_no": "KE-77",
+  "bill_date": "2026-04-21",
+  "items": [
+    {
+      "description": "Fan motor repair",
+      "hsn": "9987",
+      "qty": 1,
+      "rate": 1800.0,
+      "gst_rate": 18,
+      "amount": 1800.0
+    },
+    {
+      "description": "Capacitor",
+      "hsn": "8532",
+      "qty": 3,
+      "rate": 120.0,
+      "gst_rate": 18,
+      "amount": 360.0
+    }
+  ],
+  "taxable_value": 2160.0,
+  "cgst": 194.4,
+  "sgst": 194.4,
+  "igst": 0.0,
+  "total": 2548.8
+}
