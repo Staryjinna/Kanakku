@@ -13,6 +13,8 @@ dependencies = [
   "pyjwt",
   "python-multipart",
   "sqlite-vec",
+  "pypdf",
+  "pillow",
 ]
 
 [project.optional-dependencies]

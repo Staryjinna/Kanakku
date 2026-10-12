@@ -59,3 +59,15 @@ def signup_payload(email: str = "a@example.com", **over: object) -> dict[str, ob
     }
     base.update(over)
     return base
+
+
+@pytest.fixture
+def business_id(conn) -> int:  # type: ignore[no-untyped-def]
+    from app.auth import service
+
+    uid = service.signup(
+        conn, email="u@example.com", password=PASSWORD, name="U", business_name="B", state_code="33"
+    )
+    return int(
+        conn.execute("SELECT id FROM businesses WHERE owner_user_id=?", (uid,)).fetchone()[0]
+    )

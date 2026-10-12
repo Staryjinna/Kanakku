@@ -9,6 +9,8 @@ from fastapi.staticfiles import StaticFiles
 
 from app import db, health
 from app.auth.router import router as auth_router
+from app.bills import service as bills_service
+from app.bills.router import router as bills_router
 from app.config import Settings, get_settings
 from app.jobs.router import router as jobs_router
 from app.jobs.worker import Worker
@@ -34,6 +36,7 @@ def create_app(settings: Settings | None = None, provider: Provider | None = Non
         app.state.provider = prov
         app.state.gateway = Gateway(prov, conn, settings)
         app.state.worker = worker
+        bills_service.register_handlers(worker, conn, app.state.gateway, settings)
         if settings.worker_enabled:
             worker.start()
         yield
@@ -48,6 +51,7 @@ def create_app(settings: Settings | None = None, provider: Provider | None = Non
     app.include_router(health.router)
     app.include_router(auth_router)
     app.include_router(jobs_router)
+    app.include_router(bills_router)
     _mount_frontend(app, Path(settings.frontend_dist))
     return app
 

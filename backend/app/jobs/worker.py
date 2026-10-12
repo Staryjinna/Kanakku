@@ -10,6 +10,7 @@ from app.jobs import queue
 logger = logging.getLogger(__name__)
 
 Handler = Callable[[dict[str, Any]], Awaitable[None]]
+FailureHandler = Callable[[dict[str, Any], str], Awaitable[None]]
 
 
 class Worker:
@@ -19,10 +20,16 @@ class Worker:
         self.conn = conn
         self.poll_s = poll_s
         self.handlers: dict[str, Handler] = {}
+        self.failure_handlers: dict[str, FailureHandler] = {}
         self._task: asyncio.Task[None] | None = None
 
-    def register(self, kind: str, handler: Handler) -> None:
+    def register(
+        self, kind: str, handler: Handler, on_failure: FailureHandler | None = None
+    ) -> None:
+        """`on_failure(payload, error)` runs once the job has used all its attempts."""
         self.handlers[kind] = handler
+        if on_failure:
+            self.failure_handlers[kind] = on_failure
 
     async def run_once(self) -> bool:
         """Process one queued job. Returns False if the queue was empty."""
@@ -36,7 +43,14 @@ class Worker:
             await handler(json.loads(job["payload_json"]))
         except Exception as exc:  # job failures must never kill the worker loop
             logger.warning("job %s failed: %s", job["id"], type(exc).__name__)
-            queue.mark_failed(self.conn, job["id"], job["attempts"], f"{type(exc).__name__}: {exc}")
+            error = f"{type(exc).__name__}: {exc}"
+            queue.mark_failed(self.conn, job["id"], job["attempts"], error)
+            give_up = self.failure_handlers.get(job["kind"])
+            if give_up and job["attempts"] >= queue.MAX_ATTEMPTS:
+                try:
+                    await give_up(json.loads(job["payload_json"]), error)
+                except Exception:
+                    logger.exception("failure handler error")
         else:
             queue.mark_done(self.conn, job["id"])
         return True
