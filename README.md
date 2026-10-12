@@ -4,7 +4,7 @@ Back-office assistant for small Indian businesses: bill capture with GST validat
 assistant with citations, a ledger/dashboard, and payment follow-up drafts. Everything runs on your
 own machine: one SQLite file and a local Ollama model server. No third-party services at runtime.
 
-> Status: **Phase 0 (foundation)**. Auth, LLM gateway, job queue and the app shell are in place.
+> Status: **Phase 1 (bill capture)**. Upload a bill, review the extracted fields with GST checks, confirm.
 > Features land phase by phase; see `CLAUDE.md`.
 
 ## Architecture
@@ -31,6 +31,17 @@ docker compose up     # app + ollama
 ```
 
 `GET /api/health` reports database status and whether Ollama is reachable.
+
+## Bill capture
+
+Upload a JPG/PNG/WEBP/PDF (<= 10 MB) on the Bills page. A background job reads it with the local vision
+(or, for text PDFs, text) model, runs GST checks (GSTIN format and checksum, line amounts, totals,
+CGST/SGST vs IGST, GST slabs, date), and puts it in "Needs review". Nothing reaches the ledger until
+you confirm. Scanned PDFs are supported when the page is a single embedded scan.
+
+`make eval-bills` runs extraction on `evals/bills/` (needs Ollama) and writes `evals/results/bills_<date>.md`.
+The bundled samples are synthetic (`scripts/make_sample_bills.py`); add real, redacted bills with a
+matching `.json` file for a meaningful accuracy number.
 
 ## Limitations
 

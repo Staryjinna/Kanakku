@@ -1,6 +1,8 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import { useAuth } from "./auth";
 import { Spinner } from "./components/Layout";
+import BillReview from "./pages/BillReview";
+import Bills from "./pages/Bills";
 import Dashboard from "./pages/Dashboard";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
@@ -19,6 +21,8 @@ export default function App() {
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
       <Route path="/" element={<Protected><Dashboard /></Protected>} />
+      <Route path="/bills" element={<Protected><Bills /></Protected>} />
+      <Route path="/bills/:id" element={<Protected><BillReview /></Protected>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
