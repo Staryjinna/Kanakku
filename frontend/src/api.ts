@@ -23,6 +23,7 @@ export interface Health {
   status: string;
   db: string;
   ollama: string;
+  reranker: string;
 }
 
 export interface Issue {
@@ -81,6 +82,36 @@ export const CATEGORIES = [
   "repairs",
   "other",
 ] as const;
+
+export interface Citation {
+  n: number;
+  chunk_id: number;
+  document_id: number;
+  title: string;
+  page: number;
+  snippet: string;
+  text: string;
+}
+
+export interface AskResult {
+  answer: string;
+  refused: boolean;
+  citations: Citation[];
+}
+
+export interface GstDocument {
+  id: number;
+  title: string;
+  source_url: string | null;
+  chunks: number;
+}
+
+export interface HistoryItem {
+  id: number;
+  question: string;
+  refused: number;
+  created_at: string;
+}
 
 export class ApiError extends Error {
   constructor(
@@ -146,7 +177,57 @@ export const api = {
     request<Bill>("POST", `/bills/${id}/confirm`, { override }),
   retryBill: (id: number) => request<unknown>("POST", `/bills/${id}/retry`),
   billFileUrl: (id: number) => `/api/bills/${id}/file`,
+  gstDocuments: () => request<GstDocument[]>("GET", "/gst/documents"),
+  gstHistory: () => request<HistoryItem[]>("GET", "/gst/history"),
 };
+
+/** Ask a GST question; `onDelta` gets answer text as it streams. Resolves with the final answer. */
+export async function askGst(
+  question: string,
+  onDelta: (text: string) => void,
+  signal?: AbortSignal,
+): Promise<AskResult> {
+  let res: Response;
+  try {
+    res = await fetch("/api/gst/ask", {
+      method: "POST",
+      credentials: "same-origin",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ question }),
+      signal,
+    });
+  } catch (e) {
+    if (e instanceof DOMException && e.name === "AbortError") throw e;
+    throw new ApiError(0, "Cannot reach the server. Check your connection.");
+  }
+  if (!res.ok || !res.body) {
+    const data: unknown = await res.json().catch(() => null);
+    throw new ApiError(res.status, errorMessage((data as { detail?: unknown } | null)?.detail));
+  }
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+  let result: AskResult | null = null;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    let end: number;
+    while ((end = buffer.indexOf("\n\n")) >= 0) {
+      const block = buffer.slice(0, end);
+      buffer = buffer.slice(end + 2);
+      const event = /^event: (.*)$/m.exec(block)?.[1];
+      const data = /^data: (.*)$/m.exec(block)?.[1];
+      if (!event || !data) continue;
+      const payload = JSON.parse(data) as Record<string, unknown>;
+      if (event === "delta") onDelta(String(payload.text));
+      else if (event === "done") result = payload as unknown as AskResult;
+      else if (event === "error") throw new ApiError(502, String(payload.detail));
+    }
+  }
+  if (!result) throw new ApiError(502, "The answer was cut off. Please try again.");
+  return result;
+}
 
 /** "1234.5" -> 123450 paise; "" -> null; invalid -> NaN */
 export function rupeesToPaise(text: string): number | null {

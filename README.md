@@ -4,7 +4,7 @@ Back-office assistant for small Indian businesses: bill capture with GST validat
 assistant with citations, a ledger/dashboard, and payment follow-up drafts. Everything runs on your
 own machine: one SQLite file and a local Ollama model server. No third-party services at runtime.
 
-> Status: **Phase 1 (bill capture)**. Upload a bill, review the extracted fields with GST checks, confirm.
+> Status: **Phase 2 (GST assistant)**. Bill capture with GST checks, plus cited GST Q&A from your own documents.
 > Features land phase by phase; see `CLAUDE.md`.
 
 ## Architecture
@@ -42,6 +42,33 @@ you confirm. Scanned PDFs are supported when the page is a single embedded scan.
 `make eval-bills` runs extraction on `evals/bills/` (needs Ollama) and writes `evals/results/bills_<date>.md`.
 The bundled samples are synthetic (`scripts/make_sample_bills.py`); add real, redacted bills with a
 matching `.json` file for a meaningful accuracy number.
+
+## GST assistant
+
+Answers come **only** from documents you load; nothing is answered from the model's own memory.
+
+```sh
+cp ~/Downloads/*.pdf data/corpus/     # official CBIC / GST Council PDFs: Acts, Rules, circulars, FAQs
+make ingest                           # chunk, embed (Ollama) and index; safe to re-run
+make ingest ARGS=--reset              # rebuild after changing EMBED_MODEL
+```
+
+Search is hybrid: FTS5 keyword search plus sqlite-vec similarity, fused with reciprocal rank fusion,
+then re-ranked with a local cross-encoder (`RERANK_MODEL`, downloaded once by sentence-transformers;
+installed by `make setup`). `GET /api/health` shows `reranker: off` if it is missing, which lowers
+answer quality. If the excerpts don't support an answer, or the model doesn't cite them, the app
+refuses and suggests asking a CA.
+
+`make eval-gst` scores citation recall, answer correctness (the text model as judge) and refusal of
+unanswerable questions, and writes `evals/results/gst_<date>.md`. To try it without official PDFs:
+
+```sh
+python scripts/make_sample_corpus.py                      # tiny paraphrased notes, NOT official
+make ingest ARGS="--dir evals/corpus_sample --reset"
+make eval-gst
+```
+
+Replace `evals/gst_golden.jsonl` with questions drawn from your real corpus for a meaningful result.
 
 ## Limitations
 
