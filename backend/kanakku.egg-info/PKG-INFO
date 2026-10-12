@@ -1,0 +1,19 @@
+Metadata-Version: 2.4
+Name: kanakku
+Version: 0.1.0
+Summary: Kanakku AI - back-office assistant for small Indian businesses
+Requires-Python: >=3.12
+Requires-Dist: fastapi
+Requires-Dist: uvicorn
+Requires-Dist: pydantic
+Requires-Dist: pydantic-settings
+Requires-Dist: httpx
+Requires-Dist: argon2-cffi
+Requires-Dist: pyjwt
+Requires-Dist: python-multipart
+Requires-Dist: sqlite-vec
+Provides-Extra: dev
+Requires-Dist: pytest; extra == "dev"
+Requires-Dist: pytest-asyncio; extra == "dev"
+Requires-Dist: ruff; extra == "dev"
+Requires-Dist: mypy; extra == "dev"

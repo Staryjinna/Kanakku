@@ -1,0 +1,15 @@
+fastapi
+uvicorn
+pydantic
+pydantic-settings
+httpx
+argon2-cffi
+pyjwt
+python-multipart
+sqlite-vec
+
+[dev]
+pytest
+pytest-asyncio
+ruff
+mypy
