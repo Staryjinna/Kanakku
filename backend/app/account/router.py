@@ -10,6 +10,7 @@ from app.account import service
 from app.auth.deps import COOKIE_NAME, AppSettings, CurrentUser, Db
 from app.auth.router import MeResponse, to_me
 from app.auth.service import get_user
+from app.security import CSRF_COOKIE
 
 router = APIRouter(prefix="/api/account", tags=["account"])
 
@@ -64,3 +65,4 @@ async def delete_account(
         conn, user["user_id"], user["business_id"], user["email"], settings.upload_dir
     )
     response.delete_cookie(COOKIE_NAME, path="/")
+    response.delete_cookie(CSRF_COOKIE, path="/")

@@ -3,6 +3,7 @@ import sqlite3
 from typing import Any
 
 from app.db import utcnow_iso
+from app.llm.redact import redact
 
 MAX_ATTEMPTS = 3
 
@@ -52,5 +53,5 @@ def mark_failed(conn: sqlite3.Connection, job_id: int, attempts: int, error: str
     status = "failed" if attempts >= MAX_ATTEMPTS else "queued"
     conn.execute(
         "UPDATE jobs SET status = ?, error = ?, updated_at = ? WHERE id = ?",
-        (status, error[:500], utcnow_iso(), job_id),
+        (status, redact(error)[:500], utcnow_iso(), job_id),
     )

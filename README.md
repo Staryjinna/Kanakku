@@ -4,7 +4,8 @@ Back-office assistant for small Indian businesses: bill capture with GST validat
 assistant with citations, a ledger/dashboard, and payment follow-up drafts. Everything runs on your
 own machine: one SQLite file and a local Ollama model server. No third-party services at runtime.
 
-> Status: **Phase 4 (follow-ups)**. Bill capture, cited GST Q&A, ledger, dashboard, exports and payment reminders.
+> Status: **Phase 5 (hardening) complete**. Bill capture, cited GST Q&A, ledger, dashboard, exports, payment
+> reminders, AI usage metrics and a security pass.
 > Features land phase by phase; see `CLAUDE.md`.
 
 ## Architecture
@@ -111,6 +112,33 @@ make backup ARGS="--restore data/backups/kanakku-<timestamp>.db"
 ```
 
 Run `make backup` daily with cron, e.g. `0 2 * * * cd /path/to/kanakku && make backup`.
+
+## Operations and security
+
+- **AI usage page** (`/admin`): calls per day, p50/p95 latency, cache hit rate, errors, calls by purpose, job
+  queue. Visible only to emails listed in `ADMIN_EMAILS` (comma-separated); nobody is admin by default.
+- **Rate limit:** 60 AI requests per user per hour (`AI_RATE_LIMIT_PER_HOUR`) across bill reads, GST
+  questions and reminder drafts; over the limit the API answers 429 with `Retry-After`.
+- **Production:** set `ENV=prod` (secure cookies, HSTS, no API schema) and a random `JWT_SECRET`
+  (>= 32 characters; the app refuses to start otherwise). Serve it behind HTTPS.
+
+Security checklist (each item has tests):
+
+- [x] Uploads: type from magic bytes (never the file name), must actually decode, 10 MB / 40 megapixel /
+  100 page limits, encrypted PDFs refused, stored under a server-chosen name in the business's own folder
+- [x] Path traversal: files are only served from the caller's own upload folder; data export checks the same
+- [x] CSRF: double-submit token (`kanakku_csrf` cookie echoed in `X-CSRF-Token`) plus an `Origin` check on
+  every state-changing API call made with the session cookie
+- [x] Cookies: session is `HttpOnly`, `SameSite=Lax`, `Secure` in prod
+- [x] Headers: CSP (self only, no third-party origins), `nosniff`, `X-Frame-Options`, `Referrer-Policy`,
+  `Permissions-Policy`, HSTS in prod, `Cache-Control: no-store` on API responses
+- [x] No PII in `llm_calls`, job/bill error text or application logs: PAN, GSTIN, phone, email and long numbers
+  are redacted (`tests/test_pii.py` runs every AI feature with PII-laden input)
+- [x] Tenant isolation: every module has a test that user A cannot read or change user B's data
+- [x] Login rate limit (5 failures / 15 min per email), argon2 password hashing
+- [x] Dependency audit: `make audit` (`pip-audit` and `npm audit --omit=dev`) is clean and runs in CI.
+  `npm audit` (all deps) still reports advisories in Tailwind 3's build-time dependencies (glob and CSS
+  parsing at build time on our own files); they never ship to users. Upgrading to Tailwind 4 clears them.
 
 ## Limitations
 

@@ -7,6 +7,7 @@ from app.auth.deps import CurrentBusiness, Db
 from app.followups import service
 from app.llm.gateway import Gateway
 from app.llm.providers.base import LLMError
+from app.ratelimit import AiLimit
 
 router = APIRouter(prefix="/api", tags=["followups"])
 
@@ -175,6 +176,7 @@ async def draft_followup(
     conn: Db,
     business_id: CurrentBusiness,
     gateway: Annotated[Gateway, Depends(get_gateway)],
+    _: AiLimit,
 ) -> dict[str, Any]:
     try:
         return await service.create_draft(

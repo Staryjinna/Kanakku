@@ -27,6 +27,7 @@ export function AppShell({ children, wide = false }: { children: ReactNode; wide
           <NavLink to="/ask" className={link}>Ask GST</NavLink>
           <NavLink to="/followups" className={link}>Follow-ups</NavLink>
           <NavLink to="/account" className={link}>Account</NavLink>
+          {user?.is_admin && <NavLink to="/admin" className={link}>Admin</NavLink>}
         </nav>
       </header>
       <main className={`mx-auto w-full px-4 py-6 ${width}`}>{children}</main>

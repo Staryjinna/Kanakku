@@ -42,9 +42,22 @@ def gateway(conn, settings: Settings, provider: FakeProvider) -> Gateway:  # typ
     return Gateway(provider, conn, settings)
 
 
+class CsrfClient(TestClient):
+    """Behaves like the frontend: echoes the CSRF cookie in the X-CSRF-Token header."""
+
+    def request(self, method: str, url, **kwargs):  # type: ignore[no-untyped-def,override]
+        if method.upper() not in ("GET", "HEAD", "OPTIONS"):
+            token = self.cookies.get("kanakku_csrf")
+            if token:
+                headers = dict(kwargs.pop("headers", None) or {})
+                headers.setdefault("X-CSRF-Token", token)
+                kwargs["headers"] = headers
+        return super().request(method, url, **kwargs)
+
+
 @pytest.fixture
 def client(settings: Settings, provider: FakeProvider) -> Iterator[TestClient]:
-    with TestClient(create_app(settings, provider, FakeReranker())) as c:
+    with CsrfClient(create_app(settings, provider, FakeReranker())) as c:
         yield c
 
 

@@ -1,6 +1,6 @@
 PY := backend/.venv/bin
 
-.PHONY: setup dev build run test lint ingest eval-bills eval-gst backup seed
+.PHONY: setup dev build run test lint audit ingest eval-bills eval-gst backup seed
 
 setup:
 	python3 -m venv backend/.venv
@@ -24,6 +24,11 @@ test:
 lint:
 	cd backend && ../$(PY)/ruff check . && ../$(PY)/ruff format --check . && ../$(PY)/mypy app
 	cd frontend && npm run typecheck
+
+audit:
+	$(PY)/pip install -q pip-audit
+	cd backend && ../$(PY)/pip-audit --skip-editable
+	cd frontend && npm audit --omit=dev
 
 eval-bills:
 	$(PY)/python scripts/eval_bills.py

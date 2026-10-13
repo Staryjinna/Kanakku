@@ -11,6 +11,7 @@ from app.gst_qa import answer
 from app.gst_qa.rerank import Reranker
 from app.llm.gateway import Gateway
 from app.llm.providers.base import LLMError
+from app.ratelimit import AiLimit
 
 router = APIRouter(prefix="/api/gst", tags=["gst"])
 
@@ -40,6 +41,7 @@ async def ask(
     business_id: CurrentBusiness,
     gateway: Annotated[Gateway, Depends(get_gateway)],
     reranker: Annotated[Reranker, Depends(get_reranker)],
+    _: AiLimit,
 ) -> StreamingResponse:
     async def events() -> AsyncIterator[str]:
         try:

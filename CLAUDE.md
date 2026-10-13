@@ -206,7 +206,7 @@ Use plain SQL migrations applied in order and tracked in `schema_migrations`. Mo
 | 4 Follow-ups | Section 6.7 | Nothing sends without approval; scenario tests pass |
 | 5 Hardening | Section 6.8 | Metrics page live; PII test passes; security checklist done |
 
-**Current status:** Phase 4 complete. Next: Phase 5. (Update this line after each phase.)
+**Current status:** Phases 0-5 complete. Remaining before a pilot: run `make eval-bills` and `make eval-gst` against real Ollama models with real bills and the official GST corpus, and have the Tamil reminder text reviewed by a native speaker. (Update this line after each phase.)
 
 ---
 

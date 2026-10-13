@@ -31,6 +31,14 @@ class ExtractionError(Exception):
     pass
 
 
+class BadUpload(Exception):
+    """The file claims to be an image/PDF but is corrupt, encrypted or too large to process."""
+
+
+MAX_PIXELS = 40_000_000
+MAX_PDF_PAGES = 100
+
+
 def sniff_kind(head: bytes) -> str | None:
     """Detect file type from magic bytes. Returns jpg/png/webp/pdf or None."""
     if head.startswith(b"\xff\xd8\xff"):
@@ -42,6 +50,26 @@ def sniff_kind(head: bytes) -> str | None:
     if head.startswith(b"%PDF"):
         return "pdf"
     return None
+
+
+def verify_upload(data: bytes, kind: str) -> None:
+    """Beyond the magic bytes: the file must actually parse, and be a sane size."""
+    try:
+        if kind == "pdf":
+            reader = PdfReader(io.BytesIO(data))
+            if reader.is_encrypted:
+                raise BadUpload("Password-protected PDFs are not supported.")
+            if len(reader.pages) == 0 or len(reader.pages) > MAX_PDF_PAGES:
+                raise BadUpload(f"PDFs must have between 1 and {MAX_PDF_PAGES} pages.")
+            return
+        with Image.open(io.BytesIO(data)) as img:
+            if img.width * img.height > MAX_PIXELS:  # read from the header, before decoding
+                raise BadUpload("The image is too large. Please upload a smaller photo.")
+            img.load()  # a full decode catches truncated and malformed images
+    except BadUpload:
+        raise
+    except Exception as exc:  # PIL/pypdf raise many types for malformed input
+        raise BadUpload("This file is damaged or not a valid image or PDF.") from exc
 
 
 def _image_to_b64(image: Image.Image) -> str:

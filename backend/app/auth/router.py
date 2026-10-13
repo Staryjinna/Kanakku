@@ -1,12 +1,13 @@
 import re
 from typing import Annotated, Any
 
-from fastapi import APIRouter, HTTPException, Response
+from fastapi import APIRouter, HTTPException, Request, Response
 from pydantic import BaseModel, Field, field_validator
 
 from app.auth import service
 from app.auth.deps import COOKIE_NAME, AppSettings, CurrentUser, Db
 from app.config import Settings
+from app.security import CSRF_COOKIE, new_csrf_token
 from app.states import STATES
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
@@ -72,7 +73,21 @@ def to_me(user: dict[str, Any], settings: Settings) -> dict[str, Any]:
     }
 
 
+def _set_csrf_cookie(response: Response, settings: Settings) -> None:
+    # readable by the page's JS on purpose: it echoes this value in the X-CSRF-Token header
+    response.set_cookie(
+        CSRF_COOKIE,
+        new_csrf_token(),
+        max_age=settings.jwt_expiry_days * 86400,
+        httponly=False,
+        samesite="lax",
+        secure=settings.is_prod,
+        path="/",
+    )
+
+
 def _set_cookie(response: Response, user_id: int, settings: AppSettings) -> None:
+    _set_csrf_cookie(response, settings)
     response.set_cookie(
         COOKIE_NAME,
         service.create_token(user_id, settings),
@@ -123,8 +138,11 @@ async def login(body: LoginRequest, response: Response, conn: Db, settings: AppS
 @router.post("/logout", status_code=204)
 async def logout(response: Response) -> None:
     response.delete_cookie(COOKIE_NAME, path="/")
+    response.delete_cookie(CSRF_COOKIE, path="/")
 
 
 @router.get("/me", response_model=MeResponse)
-async def me(user: CurrentUser, settings: AppSettings):  # type: ignore[no-untyped-def]
+async def me(user: CurrentUser, settings: AppSettings, request: Request, response: Response):  # type: ignore[no-untyped-def]
+    if CSRF_COOKIE not in request.cookies:  # sessions that predate CSRF protection
+        _set_csrf_cookie(response, settings)
     return to_me(user, settings)

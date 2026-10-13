@@ -215,6 +215,16 @@ export interface Followup {
   mailto_url: string | null;
 }
 
+export interface Metrics {
+  window_days: number;
+  totals: { calls: number; errors: number; error_rate: number; cache_hits: number; cache_hit_rate: number; prompt_tokens: number; completion_tokens: number };
+  latency_ms: { p50: number | null; p95: number | null };
+  per_day: { date: string; calls: number; errors: number }[];
+  by_purpose: { purpose: string; calls: number; errors: number; cache_hits: number; p50_ms: number | null; p95_ms: number | null }[];
+  recent_errors: { created_at: string; purpose: string; model: string; error: string }[];
+  jobs: { queued: number; running: number; failed: number; done: number };
+}
+
 export class ApiError extends Error {
   constructor(
     public status: number,
@@ -236,6 +246,12 @@ function errorMessage(detail: unknown): string {
   return "Something went wrong";
 }
 
+/** The CSRF cookie is readable by design: we echo it in a header on every state-changing call. */
+function csrfHeaders(): Record<string, string> {
+  const m = /(?:^|;\s*)kanakku_csrf=([^;]+)/.exec(document.cookie);
+  return m ? { "X-CSRF-Token": decodeURIComponent(m[1]) } : {};
+}
+
 async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
   let res: Response;
   const isForm = body instanceof FormData;
@@ -243,7 +259,10 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
     res = await fetch(`/api${path}`, {
       method,
       credentials: "same-origin",
-      headers: body && !isForm ? { "Content-Type": "application/json" } : undefined,
+      headers: {
+        ...(body && !isForm ? { "Content-Type": "application/json" } : {}),
+        ...(method === "GET" ? {} : csrfHeaders()),
+      },
       body: body ? (isForm ? body : JSON.stringify(body)) : undefined,
     });
   } catch {
@@ -295,6 +314,7 @@ export const api = {
     request<Followup>("PATCH", `/followups/${id}`, { draft_text: draftText, channel }),
   followupAction: (id: number, action: "approve" | "sent" | "reject") =>
     request<Followup>("POST", `/followups/${id}/${action}`),
+  metrics: (days = 14) => request<Metrics>("GET", `/admin/metrics?days=${days}`),
   dashboard: () => request<Dashboard>("GET", "/dashboard"),
   ledger: (f: LedgerFilters, limit: number, offset: number) => {
     const p = new URLSearchParams();
@@ -323,7 +343,7 @@ export async function askGst(
     res = await fetch("/api/gst/ask", {
       method: "POST",
       credentials: "same-origin",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...csrfHeaders() },
       body: JSON.stringify({ question }),
       signal,
     });

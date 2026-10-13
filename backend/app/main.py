@@ -22,8 +22,11 @@ from app.ledger.router import router as ledger_router
 from app.llm.gateway import Gateway
 from app.llm.providers.base import Provider
 from app.llm.providers.ollama import OllamaProvider
+from app.observability.router import router as metrics_router
+from app.security import CSRFMiddleware, SecurityHeadersMiddleware, install_log_redaction
 
 logging.basicConfig(level=logging.INFO)
+install_log_redaction()
 
 
 def create_app(
@@ -56,8 +59,12 @@ def create_app(
     app = FastAPI(
         title="Kanakku AI",
         lifespan=lifespan,
-        docs_url=None if settings.is_prod else "/docs",
+        docs_url=None,  # Swagger UI loads scripts from a CDN, which this app never does
+        redoc_url=None,
+        openapi_url=None if settings.is_prod else "/openapi.json",
     )
+    app.add_middleware(CSRFMiddleware, enabled=settings.csrf_enabled)
+    app.add_middleware(SecurityHeadersMiddleware, prod=settings.is_prod)  # outermost
     app.include_router(health.router)
     app.include_router(auth_router)
     app.include_router(jobs_router)
@@ -66,6 +73,7 @@ def create_app(
     app.include_router(ledger_router)
     app.include_router(account_router)
     app.include_router(followups_router)
+    app.include_router(metrics_router)
     _mount_frontend(app, Path(settings.frontend_dist))
     return app
 

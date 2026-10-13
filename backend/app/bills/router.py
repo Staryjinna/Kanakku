@@ -6,7 +6,7 @@ from fastapi.responses import FileResponse
 
 from app.auth.deps import AppSettings, CurrentBusiness, Db
 from app.bills import service
-from app.bills.extract import sniff_kind
+from app.bills.extract import BadUpload, sniff_kind, verify_upload
 from app.bills.schemas import (
     BillListOut,
     BillOut,
@@ -15,6 +15,7 @@ from app.bills.schemas import (
     IssueOut,
     UploadOut,
 )
+from app.ratelimit import AiLimit
 
 router = APIRouter(prefix="/api/bills", tags=["bills"])
 
@@ -36,7 +37,7 @@ async def _read_limited(file: UploadFile) -> bytes:
 
 @router.post("", response_model=UploadOut, status_code=201)
 async def upload_bill(
-    file: UploadFile, conn: Db, settings: AppSettings, business_id: CurrentBusiness
+    file: UploadFile, conn: Db, settings: AppSettings, business_id: CurrentBusiness, _: AiLimit
 ) -> UploadOut:
     data = await _read_limited(file)
     kind = sniff_kind(data[:16])
@@ -44,6 +45,10 @@ async def upload_bill(
         raise HTTPException(
             status_code=415, detail="Unsupported file. Upload a JPG, PNG, WEBP or PDF."
         )
+    try:
+        verify_upload(data, kind)
+    except BadUpload as exc:
+        raise HTTPException(status_code=415, detail=str(exc)) from None
     folder = Path(settings.upload_dir) / str(business_id)
     folder.mkdir(parents=True, exist_ok=True)
     path = folder / f"{uuid.uuid4().hex}.{kind}"  # name from sniffed type, never from the client
@@ -128,7 +133,7 @@ async def confirm_bill(
 
 
 @router.post("/{bill_id}/retry", response_model=UploadOut)
-async def retry_bill(bill_id: int, conn: Db, business_id: CurrentBusiness) -> UploadOut:
+async def retry_bill(bill_id: int, conn: Db, business_id: CurrentBusiness, _: AiLimit) -> UploadOut:
     try:
         job_id = service.retry_bill(conn, business_id, bill_id)
     except service.NotFound:

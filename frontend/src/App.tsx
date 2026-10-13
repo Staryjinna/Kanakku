@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import { useAuth } from "./auth";
 import { Spinner } from "./components/Layout";
 import Account from "./pages/Account";
+import Admin from "./pages/Admin";
 import Ask from "./pages/Ask";
 import BillReview from "./pages/BillReview";
 import Bills from "./pages/Bills";
@@ -34,6 +35,7 @@ export default function App() {
       <Route path="/ask" element={<Protected><Ask /></Protected>} />
       <Route path="/ledger" element={<Protected><Ledger /></Protected>} />
       <Route path="/followups" element={<Protected><Followups /></Protected>} />
+      <Route path="/admin" element={<Protected><Admin /></Protected>} />
       <Route path="/account" element={<Protected><Account /></Protected>} />
       <Route path="/onboarding" element={<Protected onboarding><Onboarding /></Protected>} />
       <Route path="/privacy" element={<Privacy />} />

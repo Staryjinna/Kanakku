@@ -19,6 +19,7 @@ from app.db import tx, utcnow_iso
 from app.jobs import queue
 from app.jobs.worker import Worker
 from app.llm.gateway import Gateway
+from app.llm.redact import redact
 
 EDITABLE_STATUSES = ("needs_review", "failed")
 
@@ -265,7 +266,7 @@ def mark_failed(conn: sqlite3.Connection, business_id: int, bill_id: int, error:
     conn.execute(
         "UPDATE bills SET status = 'failed', error = ? WHERE id = ? AND business_id = ?"
         " AND status = 'processing'",
-        (error[:300], bill_id, business_id),
+        (redact(error)[:300], bill_id, business_id),
     )
 
 
