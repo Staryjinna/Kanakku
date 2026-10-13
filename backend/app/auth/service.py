@@ -117,7 +117,7 @@ def login(conn: sqlite3.Connection, *, email: str, password: str) -> int:
 def get_user(conn: sqlite3.Connection, user_id: int) -> dict[str, Any] | None:
     row = conn.execute(
         "SELECT u.id AS user_id, u.email, u.name, b.id AS business_id,"
-        " b.name AS business_name, b.state_code, b.language, b.gstin"
+        " b.name AS business_name, b.state_code, b.language, b.gstin, b.onboarding_done"
         " FROM users u JOIN businesses b ON b.owner_user_id = u.id WHERE u.id = ?",
         (user_id,),
     ).fetchone()

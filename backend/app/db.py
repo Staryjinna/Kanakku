@@ -2,7 +2,7 @@ import logging
 import sqlite3
 from collections.abc import Iterator
 from contextlib import contextmanager
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime, timedelta, timezone
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
@@ -12,6 +12,14 @@ MIGRATIONS_DIR = Path(__file__).parent / "migrations"
 
 def utcnow_iso() -> str:
     return datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+IST = timezone(timedelta(hours=5, minutes=30))
+
+
+def today_ist() -> date:
+    """\"Today\" for Indian businesses (month boundaries, overdue dates)."""
+    return datetime.now(IST).date()
 
 
 def connect(path: str) -> sqlite3.Connection:

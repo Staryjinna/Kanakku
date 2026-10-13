@@ -34,5 +34,8 @@ ingest:
 eval-gst:
 	$(PY)/python scripts/eval_gst.py
 
-backup seed:
+backup:
+	$(PY)/python scripts/backup.py $(ARGS)
+
+seed:
 	@echo "'$@' is not implemented yet (planned for a later phase)"; exit 1

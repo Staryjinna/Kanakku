@@ -15,6 +15,7 @@ dependencies = [
   "sqlite-vec",
   "pypdf",
   "pillow",
+  "openpyxl",
 ]
 
 [project.optional-dependencies]
@@ -43,11 +44,14 @@ target-version = "py312"
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP"]
 
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["E501"]
+
 [tool.mypy]
 python_version = "3.12"
 strict = true
 plugins = ["pydantic.mypy"]
 
 [[tool.mypy.overrides]]
-module = ["sqlite_vec", "sentence_transformers"]
+module = ["sqlite_vec", "sentence_transformers", "openpyxl", "openpyxl.*"]
 ignore_missing_imports = true

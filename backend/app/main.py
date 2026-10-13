@@ -8,6 +8,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from app import db, health
+from app.account.router import router as account_router
 from app.auth.router import router as auth_router
 from app.bills import service as bills_service
 from app.bills.router import router as bills_router
@@ -16,6 +17,7 @@ from app.gst_qa.rerank import Reranker, get_reranker
 from app.gst_qa.router import router as gst_router
 from app.jobs.router import router as jobs_router
 from app.jobs.worker import Worker
+from app.ledger.router import router as ledger_router
 from app.llm.gateway import Gateway
 from app.llm.providers.base import Provider
 from app.llm.providers.ollama import OllamaProvider
@@ -60,6 +62,8 @@ def create_app(
     app.include_router(jobs_router)
     app.include_router(bills_router)
     app.include_router(gst_router)
+    app.include_router(ledger_router)
+    app.include_router(account_router)
     _mount_frontend(app, Path(settings.frontend_dist))
     return app
 

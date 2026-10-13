@@ -25,8 +25,16 @@ class Settings(BaseSettings):
     rerank_model: str = "BAAI/bge-reranker-base"
     llm_timeout_s: float = 180.0
 
+    # comma-separated emails allowed to see the metrics page
+    admin_emails: str = ""
+    ai_rate_limit_per_hour: int = 60
+    csrf_enabled: bool = True
     worker_enabled: bool = True
     frontend_dist: str = str(Path(__file__).resolve().parents[2] / "frontend" / "dist")
+
+    @property
+    def admin_email_set(self) -> set[str]:
+        return {e.strip().lower() for e in self.admin_emails.split(",") if e.strip()}
 
     @property
     def is_prod(self) -> bool:

@@ -1,11 +1,12 @@
 import re
-from typing import Annotated
+from typing import Annotated, Any
 
 from fastapi import APIRouter, HTTPException, Response
 from pydantic import BaseModel, Field, field_validator
 
 from app.auth import service
 from app.auth.deps import COOKIE_NAME, AppSettings, CurrentUser, Db
+from app.config import Settings
 from app.states import STATES
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
@@ -59,6 +60,16 @@ class MeResponse(BaseModel):
     state_code: str
     language: str
     gstin: str | None
+    onboarding_done: bool
+    is_admin: bool = False
+
+
+def to_me(user: dict[str, Any], settings: Settings) -> dict[str, Any]:
+    return {
+        **user,
+        "onboarding_done": bool(user["onboarding_done"]),
+        "is_admin": user["email"] in settings.admin_email_set,
+    }
 
 
 def _set_cookie(response: Response, user_id: int, settings: AppSettings) -> None:
@@ -92,7 +103,7 @@ async def signup(body: SignupRequest, response: Response, conn: Db, settings: Ap
     except service.EmailTaken:
         raise HTTPException(status_code=409, detail="Email already registered") from None
     _set_cookie(response, user_id, settings)
-    return service.get_user(conn, user_id)
+    return to_me(service.get_user(conn, user_id) or {}, settings)
 
 
 @router.post("/login", response_model=MeResponse)
@@ -106,7 +117,7 @@ async def login(body: LoginRequest, response: Response, conn: Db, settings: AppS
     except service.InvalidCredentials:
         raise HTTPException(status_code=401, detail="Invalid email or password") from None
     _set_cookie(response, user_id, settings)
-    return service.get_user(conn, user_id)
+    return to_me(service.get_user(conn, user_id) or {}, settings)
 
 
 @router.post("/logout", status_code=204)
@@ -115,5 +126,5 @@ async def logout(response: Response) -> None:
 
 
 @router.get("/me", response_model=MeResponse)
-async def me(user: CurrentUser):  # type: ignore[no-untyped-def]
-    return user
+async def me(user: CurrentUser, settings: AppSettings):  # type: ignore[no-untyped-def]
+    return to_me(user, settings)
