@@ -13,6 +13,7 @@ from app.auth.router import router as auth_router
 from app.bills import service as bills_service
 from app.bills.router import router as bills_router
 from app.config import Settings, get_settings
+from app.followups.router import router as followups_router
 from app.gst_qa.rerank import Reranker, get_reranker
 from app.gst_qa.router import router as gst_router
 from app.jobs.router import router as jobs_router
@@ -64,6 +65,7 @@ def create_app(
     app.include_router(gst_router)
     app.include_router(ledger_router)
     app.include_router(account_router)
+    app.include_router(followups_router)
     _mount_frontend(app, Path(settings.frontend_dist))
     return app
 

@@ -168,6 +168,53 @@ export interface BusinessInput {
   onboarding_done?: boolean;
 }
 
+export interface Customer {
+  id: number;
+  name: string;
+  phone: string | null;
+  email: string | null;
+  open_invoices?: number;
+}
+
+export interface Invoice {
+  id: number;
+  customer_id: number;
+  customer_name: string;
+  invoice_no: string;
+  invoice_date: string;
+  due_date: string;
+  total_paise: number;
+  paid_paise: number;
+  balance_paise: number;
+  status: "open" | "paid";
+  days_overdue: number;
+  overdue: boolean;
+  reminders_sent: number;
+  last_reminder_at: string | null;
+}
+
+export interface InvoiceInput {
+  customer_id: number;
+  invoice_no: string;
+  invoice_date: string;
+  due_date: string;
+  total_paise: number;
+}
+
+export interface Followup {
+  id: number;
+  invoice_id: number;
+  channel: "whatsapp" | "email";
+  draft_text: string;
+  status: "draft" | "approved" | "sent" | "rejected";
+  tone: "gentle" | "firm" | "final";
+  used_template: boolean;
+  created_at: string;
+  sent_at: string | null;
+  whatsapp_url: string | null;
+  mailto_url: string | null;
+}
+
 export class ApiError extends Error {
   constructor(
     public status: number,
@@ -232,6 +279,22 @@ export const api = {
     request<Bill>("POST", `/bills/${id}/confirm`, { override }),
   retryBill: (id: number) => request<unknown>("POST", `/bills/${id}/retry`),
   billFileUrl: (id: number) => `/api/bills/${id}/file`,
+  customers: () => request<Customer[]>("GET", "/customers"),
+  createCustomer: (c: Omit<Customer, "id">) => request<Customer>("POST", "/customers", c),
+  updateCustomer: (id: number, c: Omit<Customer, "id">) => request<Customer>("PUT", `/customers/${id}`, c),
+  deleteCustomer: (id: number) => request<void>("DELETE", `/customers/${id}`),
+  invoices: (overdue = false) => request<Invoice[]>("GET", `/invoices${overdue ? "?overdue=true" : ""}`),
+  createInvoice: (i: InvoiceInput) => request<Invoice>("POST", "/invoices", i),
+  deleteInvoice: (id: number) => request<void>("DELETE", `/invoices/${id}`),
+  payInvoice: (id: number, amountPaise?: number) =>
+    request<Invoice>("POST", `/invoices/${id}/pay`, amountPaise ? { amount_paise: amountPaise } : undefined),
+  followups: (invoiceId: number) => request<Followup[]>("GET", `/invoices/${invoiceId}/followups`),
+  draftFollowup: (invoiceId: number, channel: string, variation = false) =>
+    request<Followup>("POST", `/invoices/${invoiceId}/followups`, { channel, variation }),
+  editFollowup: (id: number, draftText: string, channel?: string) =>
+    request<Followup>("PATCH", `/followups/${id}`, { draft_text: draftText, channel }),
+  followupAction: (id: number, action: "approve" | "sent" | "reject") =>
+    request<Followup>("POST", `/followups/${id}/${action}`),
   dashboard: () => request<Dashboard>("GET", "/dashboard"),
   ledger: (f: LedgerFilters, limit: number, offset: number) => {
     const p = new URLSearchParams();

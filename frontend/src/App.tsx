@@ -6,6 +6,7 @@ import Ask from "./pages/Ask";
 import BillReview from "./pages/BillReview";
 import Bills from "./pages/Bills";
 import Dashboard from "./pages/Dashboard";
+import Followups from "./pages/Followups";
 import Ledger from "./pages/Ledger";
 import Login from "./pages/Login";
 import Onboarding from "./pages/Onboarding";
@@ -32,6 +33,7 @@ export default function App() {
       <Route path="/bills/:id" element={<Protected><BillReview /></Protected>} />
       <Route path="/ask" element={<Protected><Ask /></Protected>} />
       <Route path="/ledger" element={<Protected><Ledger /></Protected>} />
+      <Route path="/followups" element={<Protected><Followups /></Protected>} />
       <Route path="/account" element={<Protected><Account /></Protected>} />
       <Route path="/onboarding" element={<Protected onboarding><Onboarding /></Protected>} />
       <Route path="/privacy" element={<Privacy />} />

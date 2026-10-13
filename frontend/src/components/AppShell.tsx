@@ -25,6 +25,7 @@ export function AppShell({ children, wide = false }: { children: ReactNode; wide
           <NavLink to="/bills" className={link}>Bills</NavLink>
           <NavLink to="/ledger" className={link}>Ledger</NavLink>
           <NavLink to="/ask" className={link}>Ask GST</NavLink>
+          <NavLink to="/followups" className={link}>Follow-ups</NavLink>
           <NavLink to="/account" className={link}>Account</NavLink>
         </nav>
       </header>

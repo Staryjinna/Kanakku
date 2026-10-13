@@ -4,7 +4,7 @@ Back-office assistant for small Indian businesses: bill capture with GST validat
 assistant with citations, a ledger/dashboard, and payment follow-up drafts. Everything runs on your
 own machine: one SQLite file and a local Ollama model server. No third-party services at runtime.
 
-> Status: **Phase 3 (ledger and pilot readiness)**. Bill capture, cited GST Q&A, ledger, dashboard and exports.
+> Status: **Phase 4 (follow-ups)**. Bill capture, cited GST Q&A, ledger, dashboard, exports and payment reminders.
 > Features land phase by phase; see `CLAUDE.md`.
 
 ## Architecture
@@ -76,6 +76,23 @@ Replace `evals/gst_golden.jsonl` with questions drawn from your real corpus for 
 - **Dashboard:** this month's purchases, input GST (CGST/SGST/IGST), top categories, bills awaiting review and overdue receivables.
 - **Export:** pick a month on the Ledger page, then download CSV or Excel (GST columns included).
 - **Account page:** business details, download all your data (zip with `data.json` and your bill files), and delete the account with all its data and uploads.
+
+## Payment follow-ups
+
+Add customers (with a phone and/or email) and sales invoices; anything open past its due date shows
+as overdue. For an overdue invoice Kanakku drafts a reminder in your business language (English or
+Tamil, set on the Account page):
+
+- Tone follows days overdue: gentle (under 15), firm (15 to 45), final (over 45).
+- One model call, checked against the facts (customer name, invoice number, amount still due, no
+  invented amounts, dates, fees or threats), and at most one repair call. If the draft still fails,
+  a fixed template is used instead.
+- You edit and approve the message, then open it in **your own** WhatsApp (`wa.me` link) or email
+  (`mailto:` link) and send it. Nothing is ever sent by the server. Mark it sent afterwards.
+
+Scenarios for tone, amount, name and invented details live in `evals/followup_scenarios.jsonl` and
+run in `make test`. The Tamil templates and prompts should be reviewed by a native speaker before
+real use. `make seed` creates a demo account (`demo@kanakku.local`) with sample data.
 
 ## Backup and restore
 

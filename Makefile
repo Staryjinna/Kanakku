@@ -38,4 +38,4 @@ backup:
 	$(PY)/python scripts/backup.py $(ARGS)
 
 seed:
-	@echo "'$@' is not implemented yet (planned for a later phase)"; exit 1
+	$(PY)/python scripts/seed_demo.py $(ARGS)
