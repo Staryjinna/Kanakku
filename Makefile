@@ -1,10 +1,17 @@
 PY := backend/.venv/bin
 
-.PHONY: setup dev build run test lint audit ingest eval-bills eval-gst backup seed
+.PHONY: setup setup-lite dev build run test lint audit ingest eval-bills eval-gst backup seed
 
 setup:
 	python3 -m venv backend/.venv
 	$(PY)/pip install -e "backend[dev,rerank]"
+	cd frontend && npm ci
+	@test -f .env || cp .env.example .env
+
+# Same as setup but skips the large cross-encoder install (GST search then skips re-ranking)
+setup-lite:
+	python3 -m venv backend/.venv
+	$(PY)/pip install -e "backend[dev]"
 	cd frontend && npm ci
 	@test -f .env || cp .env.example .env
 

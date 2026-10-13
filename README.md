@@ -22,6 +22,21 @@ make setup            # venv, deps, frontend deps, copies .env.example to .env
 ollama pull qwen2.5:7b && ollama pull qwen2.5vl:7b && ollama pull nomic-embed-text
 ```
 
+## Low-memory machines (8 GB RAM, no GPU)
+
+The default models (7B) need roughly 6 GB each. On an 8 GB laptop use the low-memory profile at the bottom
+of `.env.example` (3B models, a small re-ranker, a longer timeout), and close the browser tabs you don't need:
+
+```sh
+ollama pull qwen2.5:3b && ollama pull qwen2.5vl:3b && ollama pull nomic-embed-text
+make setup-lite        # skips the large cross-encoder install; or `make setup` and keep the small re-ranker
+export OLLAMA_MAX_LOADED_MODELS=1   # before starting Ollama: keep only one model in memory at a time
+```
+
+Expect a bill to take one to a few minutes and answers to stream slowly. Smaller models misread more:
+review every bill, and run `make eval-bills` to see how accurate your setup really is. Text PDFs are
+read faster and more accurately than photos.
+
 ## Run
 
 ```sh
