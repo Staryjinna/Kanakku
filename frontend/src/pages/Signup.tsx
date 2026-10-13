@@ -69,7 +69,7 @@ export default function Signup() {
         <label className="flex items-start gap-2 text-sm text-slate-700">
           <input type="checkbox" required className="mt-1 h-4 w-4" checked={form.consent}
             onChange={(e) => setForm((f) => ({ ...f, consent: e.target.checked }))} />
-          <span>I agree to the privacy policy. My data stays on this server.</span>
+          <span>I agree to the <Link to="/privacy" target="_blank" className="text-emerald-700 underline">privacy policy</Link>. My data stays on this server.</span>
         </label>
         <ErrorText message={error} />
         <button className="btn" disabled={busy}>{busy ? "Creating…" : "Sign up"}</button>

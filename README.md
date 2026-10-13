@@ -4,7 +4,7 @@ Back-office assistant for small Indian businesses: bill capture with GST validat
 assistant with citations, a ledger/dashboard, and payment follow-up drafts. Everything runs on your
 own machine: one SQLite file and a local Ollama model server. No third-party services at runtime.
 
-> Status: **Phase 2 (GST assistant)**. Bill capture with GST checks, plus cited GST Q&A from your own documents.
+> Status: **Phase 3 (ledger and pilot readiness)**. Bill capture, cited GST Q&A, ledger, dashboard and exports.
 > Features land phase by phase; see `CLAUDE.md`.
 
 ## Architecture
@@ -69,6 +69,31 @@ make eval-gst
 ```
 
 Replace `evals/gst_golden.jsonl` with questions drawn from your real corpus for a meaningful result.
+
+## Ledger, exports and your data
+
+- **Ledger:** confirmed bills, filterable by month, category, vendor and status, with search.
+- **Dashboard:** this month's purchases, input GST (CGST/SGST/IGST), top categories, bills awaiting review and overdue receivables.
+- **Export:** pick a month on the Ledger page, then download CSV or Excel (GST columns included).
+- **Account page:** business details, download all your data (zip with `data.json` and your bill files), and delete the account with all its data and uploads.
+
+## Backup and restore
+
+```sh
+make backup                                   # data/backups/kanakku-<timestamp>.db, newest 14 kept
+cp -a data/uploads/ /your/backup/uploads/     # bill files are not inside the database backup
+```
+
+Backups use SQLite's online backup, so they are safe while the app runs. To restore:
+
+```sh
+# 1. stop the app
+make backup ARGS="--restore data/backups/kanakku-<timestamp>.db"
+#    (your current database is kept next to it as kanakku.db.before-restore)
+# 2. start the app again
+```
+
+Run `make backup` daily with cron, e.g. `0 2 * * * cd /path/to/kanakku && make backup`.
 
 ## Limitations
 

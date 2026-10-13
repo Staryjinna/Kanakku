@@ -206,7 +206,7 @@ Use plain SQL migrations applied in order and tracked in `schema_migrations`. Mo
 | 4 Follow-ups | Section 6.7 | Nothing sends without approval; scenario tests pass |
 | 5 Hardening | Section 6.8 | Metrics page live; PII test passes; security checklist done |
 
-**Current status:** Phase 2 complete (awaiting real-model evals for bills and GST). Next: Phase 3. (Update this line after each phase.)
+**Current status:** Phase 3 complete. Next: Phase 4. (Update this line after each phase.)
 
 ---
 

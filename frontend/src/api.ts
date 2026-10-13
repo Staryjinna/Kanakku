@@ -8,6 +8,8 @@ export interface Me {
   state_code: string;
   language: string;
   gstin: string | null;
+  onboarding_done: boolean;
+  is_admin: boolean;
 }
 
 export interface SignupInput {
@@ -113,6 +115,59 @@ export interface HistoryItem {
   created_at: string;
 }
 
+export interface LedgerEntry {
+  id: number;
+  status: BillStatus;
+  bill_date: string | null;
+  vendor_name: string | null;
+  bill_no: string | null;
+  category: string | null;
+  taxable_paise: number | null;
+  cgst_paise: number | null;
+  sgst_paise: number | null;
+  igst_paise: number | null;
+  total_paise: number | null;
+}
+
+export interface LedgerResponse {
+  total_count: number;
+  entries: LedgerEntry[];
+  totals: { taxable: number; cgst: number; sgst: number; igst: number; total: number };
+}
+
+export interface LedgerFilters {
+  month?: string;
+  category?: string;
+  vendor_id?: string;
+  status?: string;
+  q?: string;
+}
+
+export interface FilterOptions {
+  months: string[];
+  categories: string[];
+  vendors: { id: number; name: string }[];
+}
+
+export interface Dashboard {
+  month: string;
+  bills: number;
+  purchases_paise: number;
+  taxable_paise: number;
+  input_gst: { cgst_paise: number; sgst_paise: number; igst_paise: number; total_paise: number };
+  top_categories: { category: string; total_paise: number }[];
+  needs_review: number;
+  overdue: { count: number; amount_paise: number };
+}
+
+export interface BusinessInput {
+  name: string;
+  gstin: string | null;
+  state_code: string;
+  language: string;
+  onboarding_done?: boolean;
+}
+
 export class ApiError extends Error {
   constructor(
     public status: number,
@@ -177,6 +232,19 @@ export const api = {
     request<Bill>("POST", `/bills/${id}/confirm`, { override }),
   retryBill: (id: number) => request<unknown>("POST", `/bills/${id}/retry`),
   billFileUrl: (id: number) => `/api/bills/${id}/file`,
+  dashboard: () => request<Dashboard>("GET", "/dashboard"),
+  ledger: (f: LedgerFilters, limit: number, offset: number) => {
+    const p = new URLSearchParams();
+    Object.entries(f).forEach(([k, v]) => v && p.set(k, v));
+    p.set("limit", String(limit));
+    p.set("offset", String(offset));
+    return request<LedgerResponse>("GET", `/ledger?${p}`);
+  },
+  ledgerFilters: () => request<FilterOptions>("GET", "/ledger/filters"),
+  exportUrl: (month: string, format: "csv" | "xlsx") => `/api/ledger/export?month=${month}&format=${format}`,
+  updateBusiness: (b: BusinessInput) => request<Me>("PATCH", "/account/business", b),
+  deleteAccount: (confirmEmail: string) => request<void>("DELETE", "/account", { confirm_email: confirmEmail }),
+  accountExportUrl: "/api/account/export",
   gstDocuments: () => request<GstDocument[]>("GET", "/gst/documents"),
   gstHistory: () => request<HistoryItem[]>("GET", "/gst/history"),
 };
@@ -227,6 +295,11 @@ export async function askGst(
   }
   if (!result) throw new ApiError(502, "The answer was cut off. Please try again.");
   return result;
+}
+
+export function monthLabel(month: string): string {
+  const [y, m] = month.split("-").map(Number);
+  return new Date(y, m - 1, 1).toLocaleDateString("en-IN", { month: "long", year: "numeric" });
 }
 
 /** "1234.5" -> 123450 paise; "" -> null; invalid -> NaN */
